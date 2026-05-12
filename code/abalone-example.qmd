@@ -1,0 +1,219 @@
+---
+title: "Linear regression: Abalone growth and pH example"
+author: "your name here"
+date: "insert date here"
+format:
+  html:
+    toc: true # use this to display a table of contents
+execute:
+  message: false # use this to make sure messages don't show up
+  warning: false # use this to make sure warnings don't show up
+---
+
+# Set up
+
+```{r}
+#| label: libraries-and-data
+
+library(tidyverse) # general use
+library(janitor) # cleaning data frames
+library(here) # file/folder organization
+library(readxl) # reading .xlsx files
+library(ggeffects) # generating model predictions
+library(flextable) # creating tables
+
+# abalone data from Hamilton et al. 2022
+abalone <- read_xlsx(here("data", "Abalone IMTA_growth and pH.xlsx"))
+```
+
+# Abalone example
+
+Data from Hamilton et al. 2022. "Integrated multi-trophic aquaculture mitigates the effects of ocean acidification: Seaweeds raise system pH and improve growth of juvenile abalone." https://doi.org/10.1016/j.aquaculture.2022.738571
+
+## a. Questions and hypotheses
+
+Question: How does pH predict abalone growth (measured in change in shell surface area per day, mm^-2^ d^-1^)?  
+
+H~0~: **[fill in here]**  
+
+H~A~: **[fill in here]**
+
+## b. Cleaning
+
+```{r}
+#| label: abalone-data-cleaning
+
+# 
+abalone_clean <- abalone  
+  # 
+  clean_names()  
+  # 
+  select(mean_p_h, change_in_area_mm2_d_1_25)  
+  # 
+  rename(mean_ph = mean_p_h, 
+         change_in_area = change_in_area_mm2_d_1_25)
+```
+
+Don't forget to look at your data! Use `View(abalone_clean)` in the _Console_.
+
+## c. Exploratory data visualization
+
+```{r}
+#| label: abalone-scatterplot
+
+# 
+ggplot(data = abalone_clean, # 
+       aes(x = mean_ph, # 
+           y = change_in_area)) 
+  # 
+  geom_point(size = 4,
+             stroke = 1,
+             fill = "firebrick4",
+             shape = 21)
+```
+
+Where does the missing value come from?  
+
+**insert response here**  
+
+Don't forget to turn your warnings off either in the individual code chunk or in the YAML at the top of the file.
+
+## d. Abalone model
+
+### Model fitting
+
+```{r}
+#| label: abalone-model
+
+abalone_model <- lm(
+  change_in_area ~ mean_ph, # 
+  data = abalone_clean      # 
+)
+```
+
+### Diagnostics
+
+```{r abalone-model-diagnostics}
+
+par(mfrow = c(2, 2))   # 
+plot(abalone_model)    # 
+
+```
+
+### Model summary
+
+```{r}
+#| label: abalone-model-summary
+
+# more information about the model
+summary(abalone_model)
+
+```
+
+What is the slope estimate (with standard error?)  
+
+**insert your response here**  
+
+What is the intercept estimate (with standard error?)  
+
+**insert your response here**
+
+### Generating predictions
+
+```{r}
+#| label: abalone-model-predictions
+
+# creating a new object called abalone_preds
+abalone_preds <- ggpredict(
+  abalone_model,      # model object
+  terms = "mean_ph"   # predictor (in quotation marks)
+)
+
+# display the predictions
+abalone_preds
+```
+
+Look at the column names using `colnames(abalone_preds)` in the Console.  
+
+What are the column names?  
+
+**insert your notes here**  
+
+Look at the actual object (by clicking on it in Environment).  
+
+Look at the class of the object using `class(abalone_preds)` in the Console.  
+
+What is this type of object?  
+
+**insert your notes here**  
+
+View `abalone_preds` like a data frame. 
+
+### Why generate model predictions?  
+
+This dataset does not include any _actual_ observations of abalone growth at pH = 8.  
+
+However, the model can tell us a _prediction_ for what abalone growth could be if pH = 8 based on the existing data.  
+
+Figure out what abalone growth the model would _predict_ at pH = 8.
+
+```{r}
+#| label: model-predictions-8
+
+# finding the model prediction at a specific value
+ggpredict(
+  abalone_model,      # model object
+  terms = "mean_ph[8]"   # predictor (in quotation marks) and predictor value in brackets
+)
+```
+
+How would you interpret this?  
+
+**insert your response here**
+
+### Visualizing model predictions and data
+
+```{r}
+#| label: abalone-model-final-figure
+
+# base layer: ggplot
+# using clean data frame
+ggplot(data = abalone_clean,
+       aes(x = mean_ph,
+           y = change_in_area)) +
+  # first layer: points representing abalones
+  geom_point(size = 4,
+             stroke = 1,
+             fill = "firebrick4",
+             shape = 21) +
+  # second layer: ribbon representing confidence interval
+  # using predictions data frame
+  geom_ribbon(data = abalone_preds,
+              aes(x = x,
+                  y = predicted,
+                  ymin = conf.low,
+                  ymax = conf.high),
+              alpha = 0.1) +
+  # third layer: line representing model predictions
+  # using predictions data frame
+  geom_line(data = abalone_preds,
+            aes(x = x,
+                y = predicted)) +
+  # axis labels
+  labs(x = "Mean pH", 
+       y = expression("Change in shell area ("*mm^{2}~d^-1*")")) +
+  # theme
+  theme_minimal()
+```
+
+### Creating a table with model coefficients, 95% confidence intervals, and more
+
+**Note:** both these functions are from `gtsummary`.
+
+```{r}
+#| label: abalone-table
+
+as_flextable(abalone_model)
+```
+
+**END OF ABALONE EXAMPLE**
