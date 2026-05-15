@@ -3,7 +3,7 @@ title: "Linear regression: Sonadora temperature and elevation example"
 author: "Kate Bierwagen"
 date: "2026-05-15"
 format:
-  html:
+  pdf:
     toc: true # use this to display a table of contents
 execute:
   message: false # use this to make sure messages don't show up
@@ -106,7 +106,7 @@ temperature_model <- lm(
 
 # diagnostics
 par(mfrow = c(2, 2))
-plot(temperature_model)
+plot(temperature_model) # displays plot in 2x2 grid 
 
 ```
 
@@ -114,7 +114,7 @@ plot(temperature_model)
 
 ```{r}
 #| label: temperature-model-summary
-
+# creating temp. model summary
 summary(temperature_model)
 
 ```
@@ -175,7 +175,7 @@ ggplot(data = sonadora_sum,
 
 ```{r}
 #| label: temperature-model-table
-
+# creating temperature model table
 as_flextable(temperature_model)
 ```
 
